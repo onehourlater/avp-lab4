@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Новости</title>
+    <link rel="stylesheet" href="css/common.css" />
+</head>
+<body>
+<div class="news">
+    <div class="news__col">
+        <h1> Сайт новостей </h1>
+        <div>
+            <h2> Последние новости: </h2>
+        </div>
+        <div class="news__list">
+            Загрузка..
+        </div>
+        <div>
+            <h2> Добавить новую новость: </h2>
+        </div>
+        <div class="inputs">
+            <div class="inputs__col">
+                <textarea id="BODY" class="textarea" placeholder="Ваша новость" required="required"></textarea>
+            </div>
+            <div class="inputs__col inputs__col-right">
+                <input id="AUTHOR_NAME" class="input" type="text" placeholder="Ваше имя" required="required" />
+                <div class="btn-c">
+                    <div id="article-send-btn" class="btn-c__btn">
+                        Отправить
+                    </div>
+                </div>
+                <div class="btn-response">
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="news__col news__col-users">
+        <h1> Подписчики </h1>
+        <div class="user-cards">
+            Загрузка
+        </div>
+        <h3>
+            Подписаться
+        </h3>
+        <div class="subscribe">
+            <input id="EMAIL" class="input" type="text" placeholder="Ваш Email" required="required" />
+            <div class="btn-c">
+                <div id="subscribe-btn" class="btn-c__btn">
+                    Отправить
+                </div>
+            </div>
+            <div class="subscribe-btn-response">
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+<script src="js/jquery.min.js"></script>
+<script src="js/common.js"></script>
+</body>
+</html>
