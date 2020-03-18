@@ -21,10 +21,25 @@ public class SpringController {
     private static final String SUCCESS_STATUS = "success";
     private static final String ERROR_STATUS = "error";
 
+    private HazelcastInstance instance;
+
     JDBC jdbc = new JDBC();
 
     @Autowired
-    private HazelcastInstance instance;
+    SpringController(HazelcastInstance instance) {
+        this.instance = instance;
+
+        // Берем список подписчиков из Хазелкаста
+        IList<Map<String, String>> hazelArrayListUsers = instance.getList("subscribers");
+
+        // Берем список подписчиков из БД
+        ArrayList<Map<String, String>> allSubscribers = jdbc.getSubscribers();
+
+        // Добавляем подписчиков из БД в Хазелкаст
+        for (int i = 0; i < allSubscribers.size(); i++) {
+            hazelArrayListUsers.add(allSubscribers.get(i));
+        }
+    }
 
     @RequestMapping("/")
     public String main(Model model) {
@@ -39,46 +54,26 @@ public class SpringController {
         String authorName = data.get("authorName");
         String body = data.get("body");
 
+        // Добавляем статью в БД
         jdbc.addArticle(authorName, body);
 
-        jdbc.printArticles();
-
-        ArrayList<Map<String, String>> articles = jdbc.getArticles();
-
-        //
-
-        IList<Map<String, String>> hazelArrayListUsers = instance.getList("subscribers");
-
-        ArrayList<Map<String, String>> allSubscribers = jdbc.getSubscribers();
-
-        if(allSubscribers.size() != hazelArrayListUsers.size()) {
-            boolean subscriberInHazel = false;
-            for (int i = 0; i < allSubscribers.size(); i++) {
-                subscriberInHazel = false;
-                for (int j = 0; j < hazelArrayListUsers.size(); j++) {
-                    if (Integer.parseInt(allSubscribers.get(i).get("id")) == Integer.parseInt(hazelArrayListUsers.get(j).get("id"))) {
-                        subscriberInHazel = true;
-                        break;
-                    }
-                }
-                if (!subscriberInHazel) hazelArrayListUsers.add(allSubscribers.get(i));
-            }
-        }
-
-        //
-
-        IList<Map<String, String>> hazelArrayListArticles = instance.getList("articles");
-
+        // Создаем мап
         Map<String, String> articleMap = Map.ofEntries(
                 entry("authorName", authorName),
                 entry("body", body)
         );
 
+        // Берем статьи из Хазелкаста
+        IList<Map<String, String>> hazelArrayListArticles = instance.getList("articles");
+
+        // Добавляем статью в Хазелкаст
         hazelArrayListArticles.add (articleMap);
 
-        //
+        // Формируем JSON из статей из БД и отправляем на фронт
 
         final BaseResponse response;
+
+        ArrayList<Map<String, String>> articles = jdbc.getArticles();
 
         String json = new Gson().toJson(articles);
 
@@ -112,6 +107,19 @@ public class SpringController {
         jdbc.addSubscriber(data.get("email"));
 
         ArrayList<Map<String, String>> subscribers = jdbc.getSubscribers();
+
+        // Создаем мап
+        Map<String, String> subscriberMap = Map.ofEntries(
+                entry("email", data.get("email"))
+        );
+
+        // Берем подписчиков из Хазелкаста
+        IList<Map<String, String>> hazelArrayListSubscribers = instance.getList("subscribers");
+
+        // Добавляем подписчика в Хазелкаст
+        hazelArrayListSubscribers.add (subscriberMap);
+
+        // Формируем JSON из подписчиков и отправлем на фронт
 
         final BaseResponse response;
 
