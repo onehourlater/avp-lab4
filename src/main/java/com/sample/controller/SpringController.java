@@ -7,6 +7,7 @@ import com.sample.JDBC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import java.util.concurrent.locks.Lock;
 
 import org.springframework.stereotype.Controller;
 
@@ -29,16 +30,35 @@ public class SpringController {
     SpringController(HazelcastInstance instance) {
         this.instance = instance;
 
-        // Берем список подписчиков из Хазелкаста
-        IList<Map<String, String>> hazelArrayListUsers = instance.getList("subscribers");
+        // Блокируем список с подписчиками (hazelArrayListUsers) от внешних изменений
+        Lock lock = instance.getLock("hazelArrayListUsers");
+        lock.lock();
+        try
+        {
+            // Берем список подписчиков из Хазелкаста
+            IList<Map<String, String>> hazelArrayListUsers = instance.getList("subscribers");
 
-        // Берем список подписчиков из БД
-        ArrayList<Map<String, String>> allSubscribers = jdbc.getSubscribers();
+            // Берем список подписчиков из БД
+            ArrayList<Map<String, String>> allSubscribers = jdbc.getSubscribers();
 
-        // Добавляем подписчиков из БД в Хазелкаст
-        for (int i = 0; i < allSubscribers.size(); i++) {
-            hazelArrayListUsers.add(allSubscribers.get(i));
+            // Добавляем их в Хазелкаст, если их там еще нет (по их Email)
+            boolean subscriberInHazel = false;
+            for (Map<String, String> allSubscriber : allSubscribers) {
+                subscriberInHazel = false;
+                for (int j = 0; j < hazelArrayListUsers.size(); j++) {
+                    if (allSubscriber.get("email").equals(hazelArrayListUsers.get(j).get("email"))) {
+                        subscriberInHazel = true;
+                        break;
+                    }
+                }
+                if (!subscriberInHazel) hazelArrayListUsers.add(allSubscriber);
+            }
         }
+        finally
+        {
+            lock.unlock();
+        }
+
     }
 
     @RequestMapping("/")
